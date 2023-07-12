@@ -1,10 +1,13 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, explained_variance_score, precision_score, mean_absolute_error, classification_report, RocCurveDisplay, confusion_matrix,  recall_score, accuracy_score, roc_auc_score, precision_recall_curve, f1_score, mean_squared_error
+import pandas as pd
+import numpy as np
 
 def plot_balancing(df, var):
-  target_count = df[var].value_counts()
-  target_count.plot(kind='bar', title=var);
-  print(f"{len(df.loc[df[var] == 1]) / len(df)*100}%")
+    plt.figure()
+    target_count = df[var].value_counts()
+    target_count.plot(kind='bar', title=var);
+    print(f"{len(df.loc[df[var] == 1]) / len(df)*100}%")
 
 def plot_roc(y, hat_prob_y):
     RocCurveDisplay.from_predictions(
@@ -44,3 +47,26 @@ def print_results(y, y_hat, title):
   print(f"{title} RMSE:{mean_squared_error(y, y_hat)**0.5}")
   print(f"{title} Explained Variance Score:{explained_variance_score(y, y_hat)}")
   print(f"{title} R2: {r2_score(y, y_hat)}")
+
+def plot_precision_recall_curve(probs, test_Y, label):
+    plt.figure()
+    precision, recall, _ = precision_recall_curve(test_Y, probs)
+    no_skill = len(test_Y[test_Y == 1]) / len(test_Y)
+    plt.plot([0, 1], [no_skill, no_skill], linestyle='--', label='No Skill')
+    plt.plot(recall, precision, marker='.', label=label)
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.legend()
+    plt.show()
+
+def plot_optimized_characteristics(tuned_delayed_model, X_val):
+    best_params = tuned_delayed_model.best_params_
+    importances = tuned_delayed_model.best_estimator_.feature_importances_
+    print("Best parameters:")
+    print(best_params)
+    # summarize feature importance
+    for i, v in enumerate(importances):
+        print(f"{i} {X_val.columns[i]} Score: {v}")
+    # plot feature importance
+    plt.bar([x for x in range(len(importances))], importances)
+    plt.show()

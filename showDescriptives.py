@@ -1,4 +1,16 @@
+from tabulate import tabulate
+import pandas as pd
+import matplotlib.pyplot as plt
+import openpyxl as openpyxl
+from openpyxl import Workbook
+
 def show_descriptives(df, columnheaders):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = 'Descriptives'
+
+    plot_descriptives_tables(df)
+
     refunded_df = df[df['delay'] >= 120.0][columnheaders]
     non_refunded_df = df[df['delay'] < 120.0][columnheaders]
 
@@ -28,6 +40,24 @@ def show_descriptives(df, columnheaders):
             plt.xlabel('Date')
             plt.ylabel(f'Average {column}')
             plt.title(f'Average {column} over time')
-            plt.legend()
-            plt.show()
+            temp_file = f'{column}.png'
+            plt.savefig(temp_file)
+            plt.close()
+            img = openpyxl.drawing.image.Image(temp_file)
+            sheet.add_image(img, f'A1')
+    # Save the Excel spreadsheet
+    workbook.save('Descriptives.xlsx')
+
+def plot_descriptives_tables(df):
+    numericvariables = ['scaled_carrier_score', 'distance', 'temp', 'dew', 'humidity', 'precip', 'windgust',
+                        'windspeed', 'visibility', 'delay']
+
+    statistics = df.groupby('refund').describe()
+
+    statistics_filtered = statistics[numericvariables].transpose()
+    statistics_filtered['delta'] = statistics_filtered.iloc[:, 0] - statistics_filtered.iloc[:, 1]
+
+    table = tabulate(statistics_filtered, headers='keys', tablefmt='fancy_grid')
+    print("Descriptives per group:")
+    print(table)
 

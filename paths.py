@@ -6,15 +6,15 @@ weather_paths = [
 ]
 flight_data_paths = [
         "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/012022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/022022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/032022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/042022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/052022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/062022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/072022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/082022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/092022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/102022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/112022Input.csv",
-        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/MyDrive/Mack Backup/Thesis/FlightData/122022Input.csv"
+        "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/022022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/032022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/042022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/052022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/062022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/072022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/082022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/092022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/102022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/112022Input.csv",
+        # "/Users/sander/Library/CloudStorage/GoogleDrive-mychefsbase@gmail.com/My Drive/Mack Backup/Thesis/FlightData/122022Input.csv"
     ]

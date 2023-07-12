@@ -1,5 +1,6 @@
 from parser import from_comma_separated_amount, parse_csv, to_date, parse_date_string2
 from datetime import datetime
+import pandas as pd
 
 def create_weathers(weathers, weather_paths, states):
   for index, weather_path in enumerate(weather_paths):
@@ -34,10 +35,13 @@ def create_weathers(weathers, weather_paths, states):
   return weathers
 
 
-def create_flights(flight_data_paths, summarized_data, states, weather_paths, weathers):
+def create_flights(flight_data_paths, summarized_data, states, weather_paths, weathers, variables):
     weathers = create_weathers(weathers, weather_paths, states)
     for path in flight_data_paths:
         data = parse_csv(path)
+        data = data.sample(n=int(len(data) * 0.01), replace=False, random_state=42)
+
+        data = data[data['ORIGIN_STATE_NM'].isin(states)]
         entries = []
         for _, row in data.iterrows():
             state = row["ORIGIN_STATE_NM"]
@@ -93,10 +97,7 @@ def create_flights(flight_data_paths, summarized_data, states, weather_paths, we
                     }
                     summarized_entries.append(summarized_entry)
         summarized_data.extend(summarized_entries)
-        summarized_data = pd.DataFrame(summarized_data, columns=variables)
-        summarized_data['delay'] = pd.to_numeric(summarized_data['delay'], errors='coerce')
-        df = summarized_data[pd.notnull(summarized_data['delay'])]
-        mask = df['delay'] >= 120.0
-        df.loc[mask, 'refund'] = 1.0
-        df.loc[~mask, 'refund'] = 0.0
-        return df
+    summarized_data = pd.DataFrame(summarized_data, columns=variables)
+    summarized_data['delay'] = pd.to_numeric(summarized_data['delay'], errors='coerce')
+    df = summarized_data[pd.notnull(summarized_data['delay'])]
+    return df

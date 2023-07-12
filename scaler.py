@@ -1,4 +1,5 @@
 from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
 
 def my_scaler(delay_df, from_col_name, to_col_name):
     scaler = MinMaxScaler()
