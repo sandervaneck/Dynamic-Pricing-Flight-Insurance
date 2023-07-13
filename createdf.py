@@ -35,7 +35,7 @@ def create_weathers(weathers, weather_paths, states):
   return weathers
 
 
-def create_flights(flight_data_paths, summarized_data, states, weather_paths, weathers, variables):
+def parse_data(flight_data_paths, summarized_data, states, weather_paths, weathers, variables):
     weathers = create_weathers(weathers, weather_paths, states)
     for path in flight_data_paths:
         data = parse_csv(path)
@@ -99,5 +99,4 @@ def create_flights(flight_data_paths, summarized_data, states, weather_paths, we
         summarized_data.extend(summarized_entries)
     summarized_data = pd.DataFrame(summarized_data, columns=variables)
     summarized_data['delay'] = pd.to_numeric(summarized_data['delay'], errors='coerce')
-    df = summarized_data[pd.notnull(summarized_data['delay'])]
-    return df
+    return summarized_data

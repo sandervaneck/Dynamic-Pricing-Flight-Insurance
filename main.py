@@ -1,51 +1,49 @@
 from parser import parse_csv
 from plotter import plot_to_evaluate, plot_precision_recall_curve, plot_optimized_characteristics, plot_balancing
 from paths import weather_paths, flight_data_paths
-from createdf import create_flights
+from createdf import parse_data
 from scaler import my_scaler
 from showDescriptives import show_descriptives
-from resample import resample
+from resample import resample, resample_combination
 from glm import model_glm
 from probit import model_probit
 from logit import model_logit
 from randomForest import model_rfc, optimized_random_forest
 from sklearn.model_selection import train_test_split
 import pandas as pd
-from sklearn.metrics import mean_squared_error
 from math import sqrt
-
+import openpyxl as openpyxl
+from openpyxl import Workbook
+from evaluation import write_model_evaluations
+from modifydf import modify_df
 # Press the green button in the gutter to run the script.
 
 if __name__ == '__main__':
+    workbookDf = Workbook()
+    dataFile = "Data.xlsx"
+    workbookTrainDf = Workbook()
+    randomForestFile = "RandomForest.xlsx"
+    workbookResultsDF = Workbook()
+    resultFile = "Result.xlsx"
+
     states = ["New York"]
+        # , "Hawaii", "Colorado", "Florida"]
     weathers = []
     summarized_data = []
     variables_to_parse = ['date',  'distance', 'temp', 'dew', 'humidity', 'precip', 'windgust',
                      'windspeed', 'visibility', 'delay', 'refund', 'carrier']
-    numerical_variables_parsed = ['distance', 'temp', 'dew', 'humidity', 'precip', 'windgust',
-                          'windspeed', 'visibility', 'delay', 'refund']
+    df = parse_data(flight_data_paths, summarized_data, states, weather_paths, weathers, variables_to_parse)
+    df = modify_df(df)
 
-    # Currently only parses ones without cancellations/diverted flights
-    df = create_flights(flight_data_paths, summarized_data, states, weather_paths, weathers, variables_to_parse)
-    print(df[numerical_variables_parsed].describe())
-
-    plot_balancing(df, 'refund')
-
-    df['carrier_score'] = df.groupby('carrier')['delay'].transform('mean')
-    my_scaler(df,'carrier_score','scaled_carrier_score')
-    columnheaders = ['date', 'scaled_carrier_score', 'distance', 'temp', 'dew', 'humidity', 'precip', 'windgust',
-                     'windspeed', 'visibility', 'delay', 'refund']
     factors = ['scaled_carrier_score', 'distance', 'temp', 'dew', 'humidity', 'precip', 'windgust',
                      'windspeed', 'visibility']
-
     factors_with_date =['date', 'scaled_carrier_score', 'distance', 'temp', 'dew', 'humidity', 'precip', 'windgust', 'windspeed', 'visibility']
-    # TODO: Print visuals to Excel
-    show_descriptives(df, factors_with_date)
 
+    show_descriptives(df, factors_with_date, factors, workbookDf, dataFile)
+
+    factors.append('refund')
+    df = df[factors]
     df = df.dropna()
-    # Separate the features and target variables
-    # train_X = df.drop(columns=['refund'])
-    # train_Y = df['refund']
 
     seed = 123
     train_df, aux_df = train_test_split(df, train_size=.5, random_state=seed)
@@ -59,38 +57,31 @@ if __name__ == '__main__':
     test_X = test_df.loc[:, factors]
     test_Y = test_df.loc[:, 'refund']
 
+    # Stochastic Models:
+    logit_predictions = model_logit(train_X, train_Y, test_X, workbookResultsDF, resultFile)
+    probit_predictions = model_probit(train_X, train_Y, test_X, workbookResultsDF, resultFile)
+    glm_predictions = model_glm(train_X, train_Y, test_X, workbookResultsDF, resultFile)
+
+    resample_combination(train_X, train_Y, workbookTrainDf, randomForestFile)
+
     rfc_train_model = model_rfc(train_X, train_Y)
 
     rfc_val_prediction = rfc_train_model.predict(val_X)
-    plot_to_evaluate(val_Y, rfc_val_prediction, "Random Forest Model Validation Set")
+    plot_to_evaluate(val_Y, rfc_val_prediction, "RFM Validation Set", workbookTrainDf, randomForestFile)
     rfc_val_probs = rfc_train_model.predict_proba(val_X)[:, 1]
-    plot_precision_recall_curve(rfc_val_probs, val_Y,'Random Forest Model Validation Set')
+    plot_precision_recall_curve(rfc_val_probs, val_Y,'RFM Validation Set', workbookTrainDf, randomForestFile)
 
 
     rfc_optimized = optimized_random_forest(train_X, train_Y)
-    plot_optimized_characteristics(rfc_optimized, val_X)
+    plot_optimized_characteristics(rfc_optimized, val_X, workbookTrainDf, randomForestFile)
     rfc_optimized.best_estimator_.fit(train_X, train_Y)
     rfc_predictions = rfc_optimized.best_estimator_.predict(test_X)
-    plot_to_evaluate(test_Y, rfc_predictions, "Refund Probability evaluation on test set")
 
-    #Stochastic Models:
-    glm_predictions = model_glm(test_df, factors)
-    logit_predictions = model_logit(test_df, factors)
-    probit_predictions = model_probit(test_df, factors)
-
+    plot_to_evaluate(test_Y, rfc_predictions, "Evaluation on test set", workbookResultsDF, resultFile)
+    #
     #Evaluation:
     models = ["RF", "GLM", "Logit", "Probit"]
     predictions = [rfc_predictions, glm_predictions, logit_predictions, probit_predictions]
-    rmse_scores = []
-
-    for model, prediction in zip(models, predictions):
-        rmse = sqrt(mean_squared_error(test_Y, prediction))
-        rmse_scores.append(rmse)
-
-    # Print the table of RMSE scores
-    print("Model\t\t\tRMSE")
-    print("-------------------------")
-    for model, rmse in zip(models, rmse_scores):
-        print(f"{model}\t\t{rmse:.4f}")
+    write_model_evaluations(test_Y, models, predictions, workbookResultsDF, resultFile)
 
     # See PyCharm help at https://www.jetbrains.com/help/pycharm/

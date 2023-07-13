@@ -17,10 +17,14 @@ def cost_fun(y, hat_y):
 def optimized_random_forest(X_train, Y_train):
 
     rfc = RandomForestClassifier()
-    learning_rates = [0.01, 0.03, 0.05, 0.07, 0.09, 0.1]
-    max_depths = [3, 4, 5, 6, 7, 8]
-    min_samples_splits = [3, 4, 5, 6, 7, 8]
-    min_samples_leafs = [1, 2, 3, 4, 5, 6, 7, 8]
+    learning_rates = [0.01,0.03]
+    max_depths = [3,4]
+    min_samples_splits = [3,4]
+    min_samples_leafs = [1,2]
+    # learning_rates = [0.01, 0.03, 0.05, 0.07, 0.09, 0.1]
+    # max_depths = [3, 4, 5, 6, 7, 8]
+    # min_samples_splits = [3, 4, 5, 6, 7, 8]
+    # min_samples_leafs = [1, 2, 3, 4, 5, 6, 7, 8]
     criterions = ['gini', 'entropy']
 
     param_grid = {
@@ -32,6 +36,6 @@ def optimized_random_forest(X_train, Y_train):
     basemodel = rfc
     tuned_delayed_model = HalvingGridSearchCV(basemodel, param_grid,
                                               scoring=make_scorer(cost_fun, greater_is_better=True), n_jobs=-1,
-                                              min_resources="smallest", factor=9, cv=6)
+                                              min_resources="smallest", factor=9, cv=2)
 
     return tuned_delayed_model.fit(X_train, Y_train)

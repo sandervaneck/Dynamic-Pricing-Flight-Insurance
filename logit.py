@@ -1,34 +1,31 @@
 import pandas as pd
 import statsmodels.api as sm
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+import matplotlib.pyplot as plt
 
-def model_logit(data, predictors):
-    # Specify the predictors and the response variable
-    #  ['scaled_carrier_score', 'distance', 'temp', 'dew', 'humidity', 'precip', 'windgust', 'windspeed', 'visibility']
-    response = 'refund'
+def model_logit(train_X, train_Y, test_X, workbook, file):
+    sheet = workbook.create_sheet('LOGIT')
 
-    # Filter the DataFrame to include only the necessary columns
-    data_filtered = data[predictors + [response]].copy()
-
-    # Drop rows with any NaN values
-    data_filtered = data_filtered.dropna()
-
-    # Convert the response variable to binary values (0 and 1)
-    data_filtered[response] = pd.to_numeric(data_filtered[response], errors='coerce')
-    data_filtered[response] = data_filtered[response].astype(int)
-
-    # Create the design matrix
-    X = data_filtered[predictors]
-    X = sm.add_constant(X)  # Add a constant term to the design matrix
-
+    Y = train_Y.astype(int)
+    X = sm.add_constant(train_X)  # Add a constant term to the design matrix
+    X_test_set = sm.add_constant(test_X)
     # Create the logit model (logistic regression)
-    logit_model = sm.Logit(data_filtered[response], X)
+    logit_model = sm.Logit(Y, X)
 
     # Fit the logit model to the data
     logit_results = logit_model.fit()
 
     # Print the summary of the model
-    print(logit_results.summary())
+    summary_df = pd.DataFrame(logit_results.summary().tables[1].data[1:],
+                              columns=logit_results.summary().tables[1].data[0])
 
-    # Predict the probabilities of 'refund == 1' using the trained model
-    probabilities = logit_results.predict(X)
+    # Write the summary table to the Excel sheet
+    for row in dataframe_to_rows(summary_df, index=False, header=True):
+        sheet.append(row)
+
+    # Predict the values of 'refund' using the trained model
+    probabilities = logit_results.predict(X_test_set)
+    workbook.save(file)
+
     return probabilities
