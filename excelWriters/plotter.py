@@ -1,20 +1,25 @@
 import matplotlib.pyplot as plt
+import sns as sns
 from sklearn.metrics import r2_score, explained_variance_score, precision_score, mean_absolute_error, classification_report, RocCurveDisplay, confusion_matrix,  recall_score, accuracy_score, roc_auc_score, precision_recall_curve, f1_score, mean_squared_error
 import pandas as pd
 import numpy as np
 import openpyxl as openpyxl
-from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-
+import io
 def plot_balancing(Y, workbook, row, sheet, file):
     plt.figure()
     target_count = Y.value_counts()
     target_count.plot(kind='bar', title='Refund');
-    temp_file = f'refund.png'
     plt.title(f"{len(Y.loc[Y == 1]) / len(Y)*100}% of flights Refunded")
+    temp_file = f'{row}.png'
     plt.savefig(temp_file)
     plt.close()
     img = openpyxl.drawing.image.Image(temp_file)
+    # image_buffer = io.BytesIO()
+    # plt.savefig(image_buffer, format='png')
+    plt.close()
+    # image_buffer.seek(0)
+    # img = openpyxl.drawing.image.Image(image_buffer)
     sheet.add_image(img, f'A{row}')
     workbook.save(file)
 
@@ -118,14 +123,47 @@ def plot_optimized_characteristics(tuned_delayed_model, X_val, workbook, file):
     for row in dataframe_to_rows(feature_importances_df, index=False, header=True):
         sheet.append(row)
 
+    # Plot the feature importances
     plt.figure()
-    temp_file = f'optimized.png'
+    temp_file = f'../optimized.png'
     plt.title(f"Feature Importances")
-    plt.bar([x for x in range(len(importances))], importances)
+    plt.bar(X_val.columns, importances)  # Use the feature names on the x-axis
+    plt.xticks(rotation='vertical')  # Rotate the x-axis labels vertically for better readability
     plt.savefig(temp_file)
+    plt.close()
+
+    # Add the image to the sheet
     img = openpyxl.drawing.image.Image(temp_file)
     sheet.add_image(img, f'A1')
-    plt.close()
 
     # Save the Excel workbook
     workbook.save(file)
+
+
+def print_df_overview(df, workbook, file, cat_var):
+    plot_timeline_refunds(df, workbook.create_sheet('Timeline'))
+    sheet = workbook.create_sheet('Variables')
+    headers = cat_var
+    values = []
+    for var in cat_var:
+        values.append(len(df[var].unique()))
+    for row in zip(headers, values):
+        sheet.append(row)
+    sheet.append(['#Flights', len(df)])
+    # Save the Excel workbook
+    workbook.save(file)
+
+def plot_timeline_refunds(df, sheet):
+    plt.figure()
+    # df['date'] = df['date'].dropna()
+    fig, ax1 = plt.subplots(figsize=(30, 5))
+    # df.set_index('date', inplace=True)
+    ax1.plot(df.groupby('date')['refund'].mean(), data=df, color='g')
+    ax1.set_xlabel('Days of the year')
+    ax1.set_ylabel('Refund %', color='g')
+    # ax1.set_xlim(min(df['date']), max(df['date']))
+    temp_file = f'../distr timeline.png'
+    plt.savefig(temp_file)
+    plt.close()
+    img = openpyxl.drawing.image.Image(temp_file)
+    sheet.add_image(img, f'A1')

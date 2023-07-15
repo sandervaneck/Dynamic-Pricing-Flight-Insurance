@@ -1,6 +1,5 @@
 from imblearn.combine import SMOTETomek
-from collections import Counter
-from plotter import plot_balancing
+from excelWriters.plotter import plot_balancing
 
 def resample_combination(X, Y, workbook, file):
     sheet = workbook.create_sheet(title='Table')
