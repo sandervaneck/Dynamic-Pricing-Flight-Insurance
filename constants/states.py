@@ -1,2 +1,1 @@
-states = ["New York"]
-    # , "Hawaii", "Colorado", "Florida"]
+states = ["New York", "Hawaii", "Colorado", "Florida"]
