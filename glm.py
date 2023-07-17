@@ -8,9 +8,9 @@ from sklearn.metrics import mean_squared_error
 def model_glm(train_X, train_Y, test_X, test_Y, workbook, file):
     sheet = workbook.create_sheet('GLM')
     # y = train_Y
-    # x = sm.add_constant(train_X)  # Add a constant term to the design matrix
-    # x_test = sm.add_constant(test_X)  # Add a constant term to the design matrix
-    glm_model = sm.GLM(train_Y, train_X, family=sm.families.Binomial())
+    x = sm.add_constant(train_X)  # Add a constant term to the design matrix
+    x_test = sm.add_constant(test_X)  # Add a constant term to the design matrix
+    glm_model = sm.GLM(train_Y, x, family=sm.families.Binomial())
     glm_results = glm_model.fit()
 
     summary_df = pd.DataFrame(glm_results.summary().tables[1].data[1:], columns=glm_results.summary().tables[1].data[0])
@@ -20,7 +20,7 @@ def model_glm(train_X, train_Y, test_X, test_Y, workbook, file):
         sheet.append(row)
 
     # Predict the values of 'refund' using the trained model
-    predictions = glm_results.predict(test_X)
+    predictions = glm_results.predict(x_test)
 
     # Calculate the RMSE
     rmse = np.sqrt(mean_squared_error(test_Y, predictions))

@@ -101,6 +101,11 @@ def plot_numerical_distribution(sheet, refunded_df, non_refunded_df, numerical_v
             plt.xlabel('Date')
             plt.ylabel(f'Average {column}')
             plt.title(f'Average {column} over time')
+
+            if column == 'visibility':
+                max_visibility = max(max(refunded_avg[column]), max(non_refunded_avg[column]))
+                plt.ylim(0, max_visibility)
+
             # Save the image to a buffer in memory instead of a file
             image_buffer = io.BytesIO()
             plt.savefig(image_buffer, format='png')

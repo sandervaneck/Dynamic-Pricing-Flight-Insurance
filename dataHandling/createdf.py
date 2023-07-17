@@ -2,36 +2,37 @@ from parser import from_comma_separated_amount, parse_csv, to_date, parse_date_s
 import pandas as pd
 
 def create_weathers(weathers, weather_paths, states):
-  for index, weather_path in enumerate(weather_paths):
-    data = parse_csv(weather_path)
-    entries = []
-    for _, row in data.iterrows():
-      state = row["name"]
-      if state not in states:
-        continue
-      temp = from_comma_separated_amount(row["temp"])
-      dew = from_comma_separated_amount(row["dew"])
-      humidity = from_comma_separated_amount(row["humidity"])
-      precip = from_comma_separated_amount(row["precip"])
-      windgust = from_comma_separated_amount(row["windgust"])
-      windspeed = from_comma_separated_amount(row["windspeed"])
-      visibility = from_comma_separated_amount(row["visibility"])
-      d = row["datetime"]
-      date = to_date(d)
-      entry = {
-        "date": date,
-        "state": state,
-        "temp": temp,
-        "dew": dew,
-        "humidity": humidity,
-        "precip": precip,
-        "windgust": windgust,
-        "windspeed": windspeed,
-        "visibility": visibility
-      }
-      entries.append(entry)
-  weathers.extend(entries)
-  return weathers
+    for index, weather_path in enumerate(weather_paths):
+        data = parse_csv(weather_path)
+        entries = []
+        for _, row in data.iterrows():
+            state = row["name"]
+            if state not in states:
+                continue
+            temp = from_comma_separated_amount(row["temp"])
+            dew = from_comma_separated_amount(row["dew"])
+            humidity = from_comma_separated_amount(row["humidity"])
+            precip = from_comma_separated_amount(row["precip"])
+            windgust = from_comma_separated_amount(row["windgust"])
+            windspeed = from_comma_separated_amount(row["windspeed"])
+            visibility = from_comma_separated_amount(row["visibility"])
+            d = row["datetime"]
+            date = to_date(d)
+            entry = {
+                "date": date,
+                "state": state,
+                "temp": temp,
+                "dew": dew,
+                "humidity": humidity,
+                "precip": precip,
+                "windgust": windgust,
+                "windspeed": windspeed,
+                "visibility": visibility
+            }
+            entries.append(entry)
+            weathers.extend(entries)  # Move this line inside the loop
+    return weathers
+
 
 
 def parse_data(flight_data_paths, summarized_data, states, weather_paths, weathers, variables):
@@ -72,30 +73,34 @@ def parse_data(flight_data_paths, summarized_data, states, weather_paths, weathe
                 "distance": distance
             }
             entries.append(newEntry)
-            filtered_entries = entries
-            summarized_entries = []
-            for row in filtered_entries:
-                w = next((w for w in weathers if w["state"] == row["state"] and w["date"] == row["date"]), None)
-                if w is not None:
-                    summarized_entry = {
-                        "carrier": row["carrier"],
-                        "distance": row["distance"],
-                        "origin": row["origin"],
-                        "state": row["state"],
-                        "date": row["date"],
-                        "cancelled": row["cancelled"],
-                        "delay": row["delay"],
-                        "temp": w["temp"],
-                        "dew": w["dew"],
-                        "humidity": w["humidity"],
-                        "precip": w["precip"],
-                        "windgust": w["windgust"],
-                        "windspeed": w["windspeed"],
-                        "visibility": w["visibility"],
-                        "refund": 1.0 if (row["delay"]) >= 120 or (row["cancelled"]) == 1.0 else 0.0
-                    }
-                    summarized_entries.append(summarized_entry)
-            summarized_data.extend(summarized_entries)
+
+        filtered_entries = entries  # Move this line outside the loop
+        summarized_entries = []  # Move this line outside the loop
+
+        for row in filtered_entries:
+            w = next((w for w in weathers if w["state"] == row["state"] and w["date"] == row["date"]), None)
+            if w is not None:
+                summarized_entry = {
+                    "carrier": row["carrier"],
+                    "distance": row["distance"],
+                    "origin": row["origin"],
+                    "state": row["state"],
+                    "date": row["date"],
+                    "cancelled": row["cancelled"],
+                    "delay": row["delay"],
+                    "temp": w["temp"],
+                    "dew": w["dew"],
+                    "humidity": w["humidity"],
+                    "precip": w["precip"],
+                    "windgust": w["windgust"],
+                    "windspeed": w["windspeed"],
+                    "visibility": w["visibility"],
+                    "refund": 1.0 if (row["delay"]) >= 120 or (row["cancelled"]) == 1.0 else 0.0
+                }
+                summarized_entries.append(summarized_entry)
+
+        summarized_data.extend(summarized_entries)
+
     summarized_data = pd.DataFrame(summarized_data, columns=variables)
     summarized_data['delay'] = pd.to_numeric(summarized_data['delay'])
     return summarized_data

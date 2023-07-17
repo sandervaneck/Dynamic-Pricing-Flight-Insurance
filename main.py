@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from constants.states import states
 from dataHandling.createdf import parse_data
 from dataHandling.addCatScores import add_cat_scores
-from constants.paths import factors, weather_paths, df_var, flight_data_paths, dataFile, headers, num_var, cat_var, workbookDf, \
+from constants.paths import rfc_factors, factors, weather_paths, df_var, flight_data_paths, dataFile, headers, num_var, cat_var, workbookDf, \
     workbookResultsDF, resultFile, workbookTrainDf, randomForestFile
 from evaluation import write_model_evaluations
 from glm import model_glm
@@ -35,11 +35,13 @@ if __name__ == '__main__':
     validation_df, test_df = train_test_split(aux_df, train_size=.5, random_state=seed)
     #
 
-    train_X = train_df.loc[:, factors]
+    train_X = train_df.loc[:, rfc_factors]
+    train_X_glm = train_df.loc[:, factors]
     train_Y = train_df.loc[:, 'refund']
-    val_X = validation_df.loc[:, factors]
+    val_X = validation_df.loc[:, rfc_factors]
     val_Y = validation_df.loc[:, 'refund']
-    test_X = test_df.loc[:, factors]
+    test_X_glm = test_df.loc[:, factors]
+    test_X = test_df.loc[:, rfc_factors]
     test_Y = test_df.loc[:, 'refund']
     #
 
@@ -49,7 +51,7 @@ if __name__ == '__main__':
     #
     resample_combination(train_X, train_Y, workbookTrainDf, randomForestFile)
     #
-    glm_predictions = model_glm(train_X, train_Y, test_X, test_Y, workbookResultsDF, resultFile)
+    glm_predictions = model_glm(train_X_glm, train_Y, test_X_glm, test_Y, workbookResultsDF, resultFile)
     stochastic_model = LogisticRegression()
     stochastic_model.fit(train_X, train_Y)
 
