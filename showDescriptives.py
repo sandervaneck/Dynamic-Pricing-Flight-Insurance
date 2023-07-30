@@ -50,12 +50,20 @@ def write_table(df, numerical_var, sheet):
                 cell_value = ', '.join(str(value) for value in cell_value)
             sheet.cell(row=row_index, column=col_index, value=cell_value)
 
-def show_descriptives(df, cat_var, numerical_var, workbook, file):
-    write_table(df, numerical_var, workbook.create_sheet(title='Descriptives'))
+def show_descriptives(df, workbook, file):
+    cat_var = ['distance', 'origin', 'time', 'weekday', 'carrier']
+    numerical_var = ['windspeed', 'visibility', 'temp', 'sealevelpressure']
+    descriptives_sheet = workbook.create_sheet(title='Uniques')
+    # Write the number of unique values for each categorical variable to the sheet
+    for col in cat_var:
+        unique_values = df[col].nunique()
+        descriptives_sheet.append([f"Unique values in {col}: {unique_values}"])
 
+    descriptives_sheet.append([f"Total number of flights: {len(df)}"])
+
+    write_table(df, numerical_var, workbook.create_sheet(title='Descriptives'))
     refunded_df = df[df['refund'] == 1]
     non_refunded_df = df[df['refund'] == 0]
-
     sheet_for_categorical_distributions = workbook.create_sheet("Categorical variables")
     plot_distributions(
         non_refunded_df,
@@ -67,14 +75,12 @@ def show_descriptives(df, cat_var, numerical_var, workbook, file):
         cat_var,
         sheet_for_categorical_distributions,
         'K')
-
     plot_numerical_distribution(
         workbook.create_sheet('Numerical Variables'),
         refunded_df,
         non_refunded_df,
         numerical_var
          )
-
     plot_balancing(df['refund'], workbook, 1, workbook.create_sheet("Balance"), file)
 
 def plot_numerical_distribution(sheet, refunded_df, non_refunded_df, numerical_var):

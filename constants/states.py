@@ -1,1 +1,1 @@
-states = ["New York", "Hawaii", "Colorado", "Florida", "Arizona", "Connecticut", "Delaware", "Pennsylvania", "Seattle","Georgia", "Texas", "Tennessee", "Los Angeles", "Illinois", "Indiana" ]
+states = ["New York", "Hawaii", "arizona", "Colorado", "Florida", "Arkansas", "Connecticut", "Delaware", "Pennsylvania", "Seattle","Georgia", "Texas", "Tennessee", "Los Angeles", "Illinois", "Indiana" ]

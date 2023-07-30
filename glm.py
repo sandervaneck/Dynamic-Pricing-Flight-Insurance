@@ -3,6 +3,75 @@ import pandas as pd
 import statsmodels.api as sm
 from openpyxl.utils.dataframe import dataframe_to_rows
 from sklearn.metrics import mean_squared_error
+from scipy.stats import norm
+import numpy as np
+from scipy.stats import norm
+from sklearn.linear_model import LogisticRegression
+
+def logit_p1value(model, x):
+
+    p1 = model.predict_proba(x)
+    n1 = len(p1)
+    m1 = len(model.coef_[0]) + 1
+    coefs = np.concatenate([model.intercept_, model.coef_[0]])
+    x_full = np.matrix(np.insert(np.array(x), 0, 1, axis = 1))
+    answ = np.zeros((m1, m1))
+    for i in range(n1):
+        answ = answ + np.dot(np.transpose(x_full[i, :]), x_full[i, :]) * p1[i,1] * p1[i, 0]
+    vcov = np.linalg.inv(np.matrix(answ))
+    se = np.sqrt(np.diag(vcov))
+    t1 =  coefs/se
+    p1 = (1 - norm.cdf(abs(t1))) * 2
+    return p1
+
+
+
+
+def logit_p1value(model, x):
+    p1 = model.predict_proba(x)
+    n1 = len(p1)
+    m1 = len(model.coef_[0]) + 1
+    coefs = np.concatenate([model.intercept_, model.coef_[0]])
+    x_full = np.matrix(np.insert(np.array(x), 0, 1, axis=1))
+    answ = np.zeros((m1, m1))
+    for i in range(n1):
+        answ = answ + np.dot(np.transpose(x_full[i, :]), x_full[i, :]) * p1[i, 1] * p1[i, 0]
+    vcov = np.linalg.inv(np.matrix(answ))
+    se = np.sqrt(np.diag(vcov))
+    t1 = coefs / se
+    p1 = (1 - norm.cdf(abs(t1))) * 2
+    return p1
+
+def print_model(model, x, y, sheet, workbook, file):
+    x_with_intercept = sm.add_constant(x)
+
+    results = model.fit(x_with_intercept, y)
+    coefficients = model.coef_[0]
+    intercept = model.intercept_[0]
+
+    # Create an empty DataFrame to store the summary table
+    summary_df = pd.DataFrame(
+        columns=['Variable', 'Coefficient', 'P-value', 'Std. Err.'])
+
+    # Add rows to the summary table for each variable coefficient
+    for i in range(1, len(x_with_intercept.columns)):
+        variable_name = x_with_intercept.columns[i]
+        coefficient = coefficients[i]
+        p_value = logit_p1value(model, i)
+        std_err = results.bse[i]
+        summary_df.loc[i - 1] = [variable_name, coefficient, p_value, std_err]
+
+        # Manually create a row for the Intercept coefficient
+    p_value_intercept = results.pvalues[0]
+    std_err_intercept = results.bse[0]
+    summary_df.loc[len(x_with_intercept.columns) - 1] = ['Intercept', intercept, p_value_intercept,
+                                                         std_err_intercept]
+
+    # Write the summary table to the Excel sheet
+    for row in dataframe_to_rows(summary_df, index=False, header=True):
+        sheet.append(row)
+
+    workbook.save(file)
 
 
 def model_glm(train_X, train_Y, test_X, test_Y, workbook, file):
