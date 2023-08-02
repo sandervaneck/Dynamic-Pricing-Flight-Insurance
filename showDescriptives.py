@@ -51,8 +51,8 @@ def write_table(df, numerical_var, sheet):
             sheet.cell(row=row_index, column=col_index, value=cell_value)
 
 def show_descriptives(df, workbook, file):
-    cat_var = ['distance', 'origin', 'time', 'weekday', 'carrier']
-    numerical_var = ['windspeed', 'visibility', 'temp', 'sealevelpressure']
+    cat_var = ['origin', 'time', 'weekday', 'carrier']
+    numerical_var = ['scaled_carrier_score', 'scaled_origin_score', 'scaled_time_score', 'scaled_weekday_score', 'distance', 'windspeed', 'visibility', 'temp', 'sealevelpressure', 'precip', 'cloudcover']
     descriptives_sheet = workbook.create_sheet(title='Uniques')
     # Write the number of unique values for each categorical variable to the sheet
     for col in cat_var:
