@@ -173,3 +173,19 @@ def plot_timeline_refunds(df, wb, sheet, file):
     img = openpyxl.drawing.image.Image(temp_file)
     sheet.add_image(img, f'A1')
     wb.save(file)
+
+def plot_timeline_test(y_hat, y, wb, sheet, file):
+    plt.figure()
+    # df['date'] = df['date'].dropna()
+    fig, ax1 = plt.subplots(figsize=(30, 5))
+    df.set_index('date', inplace=True)
+    ax1.plot(df.groupby('date')['refund'].mean(), data=df, color='g')
+    ax1.set_xlabel('Days of the year')
+    ax1.set_ylabel('Refund %', color='g')
+    # ax1.set_xlim(min(df['date']), max(df['date']))
+    temp_file = f'../distr timeline.png'
+    plt.savefig(temp_file)
+    plt.close()
+    img = openpyxl.drawing.image.Image(temp_file)
+    sheet.add_image(img, f'A1')
+    wb.save(file)

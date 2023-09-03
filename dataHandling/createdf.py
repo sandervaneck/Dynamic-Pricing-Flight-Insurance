@@ -121,6 +121,7 @@ def parse_data(summarized_data, weather_paths, weathers):
     data = create_data(flight_data_paths)
     weathers = create_weathers(weathers, weather_paths)
     for _, row in data.iterrows():
+        summarized_entry = {}
         w = next((w for w in weathers if w["origin"] == row["origin"] and w["date"] == row["date"]), None)
         if w is not None:
             summarized_entry = {

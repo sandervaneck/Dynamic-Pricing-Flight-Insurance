@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-import openpyxl
+import seaborn as sns
 import optuna
 import pandas as pd
 import statsmodels.api as sm
@@ -21,6 +21,7 @@ from constants.paths import weather_paths
 from dataHandling.addCatScores import add_cat_scores
 from dataHandling.createdf import parse_data
 from evaluations.crossvalidation import crossvalscore, crossvalscore_glm
+from evaluations.feature_importances import feature_importances
 from excelWriters.plotter import plot_timeline_refunds
 from resample import resample_combination
 from showDescriptives import show_descriptives
@@ -47,54 +48,105 @@ if __name__ == '__main__':
 
     df['distance'] = df['distance'].astype(float)
     df = add_cat_scores(df, file2, wb2)
-    show_descriptives(df, wb, file)
+
+    refunded_df = df[df['refund'] == 1]
+    non_refunded_df = df[df['refund'] == 0]
+    plt.figure(figsize=(10, 8))
+    target_count = refunded_df['weekday'].value_counts()
+
+    target_count.plot(figsize=(5, 5), kind="bar", title=f"Frequency distribution variable weekday")
+    plt.show()
+
+    plt.figure(figsize=(10, 8))
+    target_count2 = non_refunded_df['weekday'].value_counts()
+
+    target_count2.plot(figsize=(5, 5), kind="bar", title=f"Frequency distribution variable weekday")
+    plt.show()
     #
-    # df['wind_precip'] = df['windspeed'] * df['precip']
-    # df['visibility_squared'] = df['visibility'] * df['visibility']
-    #
-    # scores_vars = ['scaled_carrier_score', 'scaled_origin_score', 'scaled_time_score', 'scaled_weekday_score']
-    # time_var = ['date']
-    # numerical_vars = ['distance', 'windspeed', 'visibility', 'temp', 'sealevelpressure', 'precip', 'cloudcover']
-    #
-    # nonlinear_vars = ['wind_precip', 'visibility_squared']
-    # sheet4 = wb1.create_sheet("timeline")
+
+
+
+
+    df['wind_precip'] = df['windspeed'] * df['precip']
+    df['visibility_squared'] = df['visibility'] * df['visibility']
+
+    scores_vars = ['scaled_carrier_score', 'scaled_origin_score', 'scaled_time_score', 'scaled_weekday_score']
+    time_var = ['date']
+    numerical_vars = ['distance', 'windspeed', 'visibility', 'temp', 'sealevelpressure', 'precip', 'cloudcover']
+
+    corr_matrix = df[scores_vars + numerical_vars].corr()
+
+    # Set up the matplotlib figure
+    plt.figure(figsize=(10, 8))
+
+    # Create a heatmap of the correlation matrix
+    # You can customize the colormap (cmap) as needed
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+
+    # Add plot title
+    plt.title('Correlation Matrix')
+
+    # Show the plot
+    plt.show()
+
+    nonlinear_vars = ['wind_precip', 'visibility_squared']
+    sheet4 = wb1.create_sheet("timeline")
     # plot_timeline_refunds(df, wb1, sheet4, file3 )
-    # xs = scores_vars + numerical_vars
-    # xs_nonlinear = scores_vars + nonlinear_vars + ['temp', 'sealevelpressure', 'cloudcover', 'distance']
-    # ys = ['refund']
-    #
-    # seed = 42
-    # train_df, aux_df = train_test_split(df, train_size=.5, random_state=seed)
-    # validation_df, test_df = train_test_split(aux_df, train_size=.5, random_state=seed)
-    #
-    # train_X = train_df.loc[:, xs]
-    # train_X_nonlinear = train_df.loc[:, xs_nonlinear]
-    # train_Y = train_df.loc[:, ys]
-    #
-    # print(train_df["refund"].value_counts())
-    # print(train_df["time"].value_counts())
-    #
-    # train_X_resampled, train_Y_resampled_ = resample_combination(train_X, train_Y, '', '')
-    #
-    # val_X = validation_df.loc[:, xs]
-    # val_Y = validation_df.loc[:, ys]
-    # test_X = test_df.loc[:, xs]
-    # test_X_non_linear = test_df.loc[:, xs_nonlinear]
-    #
-    # test_Y = test_df.loc[:, ys]
-    #
-    # formula = 'refund ~ distance + windspeed + visibility + temp + cloudcover + precip + sealevelpressure + scaled_origin_score + scaled_carrier_score + scaled_origin_score + scaled_time_score + scaled_weekday_score'
-    # formula_nonlinear = 'refund ~ wind_precip + visibility_squared + temp + cloudcover + distance + sealevelpressure + scaled_origin_score + scaled_carrier_score + scaled_origin_score + scaled_time_score + scaled_weekday_score'
-    #
+    xs = scores_vars + numerical_vars
+    xs_nonlinear = scores_vars + nonlinear_vars + ['temp', 'sealevelpressure', 'cloudcover', 'distance']
+    ys = ['refund']
+
+    seed = 42
+    train_df, aux_df = train_test_split(df, train_size=.5, random_state=seed)
+    validation_df, test_df = train_test_split(aux_df, train_size=.5, random_state=seed)
+
+    train_X = train_df.loc[:, xs]
+    train_X_nonlinear = train_df.loc[:, xs_nonlinear]
+    train_Y = train_df.loc[:, ys]
+
+    print(test_df["date"].describe())
+
+    print(train_df["refund"].value_counts())
+    print(train_df["time"].value_counts())
+
+    train_X_resampled, train_Y_resampled_ = resample_combination(train_X, train_Y, '', '')
+
+    val_X = validation_df.loc[:, xs]
+    val_Y = validation_df.loc[:, ys]
+    test_X = test_df.loc[:, xs]
+    test_X_non_linear = test_df.loc[:, xs_nonlinear]
+
+    test_Y = test_df.loc[:, ys]
+
+    formula = 'refund ~ distance + windspeed + visibility + temp + cloudcover + precip + sealevelpressure + scaled_origin_score + scaled_carrier_score + scaled_origin_score + scaled_time_score + scaled_weekday_score'
+    formula_nonlinear = 'refund ~ wind_precip + visibility_squared + temp + cloudcover + distance + sealevelpressure + scaled_origin_score + scaled_carrier_score + scaled_origin_score + scaled_time_score + scaled_weekday_score'
+
     # logistic_regression = LogisticRegression(C = 0.1, class_weight= 'balanced', penalty= 'l1', solver= 'liblinear',random_state=seed)
-    # rand_clf = RandomForestClassifier(random_state=seed)
+    # rand_clf = RandomForestClassifier(random_state=5, max_depth=3, min_samples_split=2)
     # svm_clf = SVC(random_state=seed, max_iter=10000, class_weight= 'balanced', tol=1e-3, C=0.2)
-    # bag_svm_clf = BaggingClassifier(SVC(max_iter=10000, class_weight= 'balanced', tol=1e-3, C=0.2), max_samples=1.0 / 300, n_estimators=300)
+    # bag_svm_clf = BaggingClassifier(
+    #     SVC(max_iter=5000, class_weight='balanced', tol=1e-3, C=0.2),
+    #     max_samples=1.0 / 300,
+    #     n_estimators=100,
+    #     n_jobs=-1  # Use all available CPU cores
+    # )
     #
     # gbm = GradientBoostingClassifier(random_state=seed)
     # glm = smf.glm(formula=formula, data=train_df, family=sm.families.Binomial())
     # glm_nonlinear = smf.glm(formula=formula_nonlinear, data=train_df, family=sm.families.Binomial())
-    # #
+    # # #
+    # feature_importances(rand_clf, train_X, train_Y, xs, 'svm')
+    # feature_importances(rand_clf, train_X_resampled, train_Y_resampled_, xs, 'reb_svm')
+    # feature_importances(rand_clf, train_X, train_Y, xs, 'rfc')
+    # feature_importances(rand_clf, train_X_resampled, train_Y_resampled_, xs, 'reb_rfc')
+    # print('rfc done')
+    # feature_importances(logistic_regression, train_X, train_Y, xs, 'lr')
+    # feature_importances(logistic_regression, train_X_resampled, train_Y_resampled_, xs, 'reb_lr')
+    # print('lr done')
+    # feature_importances(gbm, train_X, train_Y, xs, 'gbm')
+    # feature_importances(gbm, train_X_resampled, train_Y_resampled_, xs, 'reb_gbm')
+    # print('gbm done')
+
     # crossvalscore(bag_svm_clf, train_X, train_Y, 'bag_svm')
     # crossvalscore(logistic_regression, train_X, train_Y, 'logistic_regression')
     # crossvalscore(rand_clf, train_X, train_Y, 'rand_clf')
@@ -232,13 +284,41 @@ if __name__ == '__main__':
     # else:
     #     y = test_Y
     #
-    # # y = np.ravel(test_Y)
-    # # best_model = RandomForestClassifier(
-    # #             n_estimators=300,
-    # #             max_depth=26,
-    # #             min_samples_split=2,
-    # #             min_samples_leaf=20,
-    # #         ).fit(test_X, y)
+    y = np.ravel(test_Y)
+    best_model = RandomForestClassifier(
+                n_estimators=280,
+                max_depth=25,
+                min_samples_split=15,
+                min_samples_leaf=10,
+            ).fit(test_X, y)
+
+    predicted_outcomes = best_model.predict(test_X)
+
+    # Plot observed outcomes and predicted outcomes
+    plt.figure(figsize=(10, 6))
+    plt.plot(test_Y['date'], test_Y['refund'], label='Observed Outcomes')
+    plt.plot(test_Y['date'], predicted_outcomes, label='Predicted Outcomes', linestyle='dashed')
+    plt.xlabel('Date')
+    plt.ylabel('Refund')
+    plt.title('Observed vs. Predicted Outcomes')
+    plt.legend()
+    temp_file = f'plot_results.png'
+    plt.savefig(temp_file)
+    plt.close()
+
+    scaled_predicted_outcomes = 134.68 + 55.62 * predicted_outcomes
+
+    # Plot observed outcomes and scaled predicted outcomes
+    plt.figure(figsize=(10, 6))
+    plt.plot(test_Y['date'], test_Y['refund'], label='Observed Outcomes')
+    plt.plot(test_Y['date'], scaled_predicted_outcomes, label='Scaled Predicted Outcomes', linestyle='dashed')
+    plt.xlabel('Date')
+    plt.ylabel('Scaled Refund')
+    plt.title('Observed vs. Scaled Predicted Outcomes')
+    plt.legend()
+    temp_file = f'plot_scaled_results.png'
+    plt.savefig(temp_file)
+    plt.close()
     # best_model.fit(val_X, val_Y)
     # print(crossvalscore(best_model, test_X, y, 'ml_test'))
     #
