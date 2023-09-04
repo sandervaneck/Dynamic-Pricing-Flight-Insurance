@@ -120,22 +120,15 @@ if __name__ == '__main__':
     formula = 'refund ~ distance + windspeed + visibility + temp + cloudcover + precip + sealevelpressure + scaled_origin_score + scaled_carrier_score + scaled_origin_score + scaled_time_score + scaled_weekday_score'
     formula_nonlinear = 'refund ~ wind_precip + visibility_squared + temp + cloudcover + distance + sealevelpressure + scaled_origin_score + scaled_carrier_score + scaled_origin_score + scaled_time_score + scaled_weekday_score'
 
-    logistic_regression = LogisticRegression(C = 0.1, class_weight= 'balanced', penalty= 'l1', solver= 'liblinear',random_state=seed)
-    rand_clf = RandomForestClassifier(random_state=5, max_depth=3, min_samples_split=2)
-    svm_clf = SVC(random_state=seed, max_iter=10000, class_weight= 'balanced', tol=1e-3, C=0.2)
-    bag_svm_clf = BaggingClassifier(
-        SVC(max_iter=5000, class_weight='balanced', tol=1e-3, C=0.2),
-        max_samples=1.0 / 300,
-        n_estimators=100,
-        n_jobs=-1  # Use all available CPU cores
-    )
-
+    logistic_regression = LogisticRegression(random_state=seed)
+    rand_clf = RandomForestClassifier(random_state=5)
+    svm_clf = SVC(random_state=seed)
     gbm = GradientBoostingClassifier(random_state=seed)
     glm = smf.glm(formula=formula, data=train_df, family=sm.families.Binomial())
     glm_nonlinear = smf.glm(formula=formula_nonlinear, data=train_df, family=sm.families.Binomial())
     # #
-    feature_importances(rand_clf, train_X, train_Y, xs, 'svm')
-    feature_importances(rand_clf, train_X_resampled, train_Y_resampled_, xs, 'reb_svm')
+    feature_importances(svm_clf, train_X, train_Y, xs, 'svm')
+    feature_importances(svm_clf, train_X_resampled, train_Y_resampled_, xs, 'reb_svm')
     feature_importances(rand_clf, train_X, train_Y, xs, 'rfc')
     feature_importances(rand_clf, train_X_resampled, train_Y_resampled_, xs, 'reb_rfc')
     print('rfc done')
@@ -146,15 +139,10 @@ if __name__ == '__main__':
     feature_importances(gbm, train_X_resampled, train_Y_resampled_, xs, 'reb_gbm')
     print('gbm done')
 
-    crossvalscore(bag_svm_clf, train_X, train_Y, 'bag_svm')
     crossvalscore(logistic_regression, train_X, train_Y, 'logistic_regression')
     crossvalscore(rand_clf, train_X, train_Y, 'rand_clf')
     crossvalscore(svm_clf, train_X, train_Y, 'svm')
-    #
-
-    # #
     crossvalscore(gbm, train_X, train_Y, 'gbm')
-    # #
     crossvalscore(logistic_regression, train_X_resampled, train_Y_resampled_, 'logistic_regression_res')
     crossvalscore(rand_clf, train_X_resampled, train_Y_resampled_, 'rand_clf_res')
     crossvalscore(gbm, train_X_resampled, train_Y_resampled_, 'gbm_res')
@@ -186,14 +174,12 @@ if __name__ == '__main__':
                 min_samples_leaf=min_samples_leaf
             )
         elif classifier == 'SVC':
-            c = trial.suggest_float('svc_c', 0.1, 1, log=True)  # Narrower range with logarithmic scale
-            coef0 = trial.suggest_float('svc_coef0', -1.0, 1.0)  # Limit decimal places
+            c = trial.suggest_float('svc_c', 0.1, 1, log=True)
+            coef0 = trial.suggest_float('svc_coef0', -1.0, 1.0)
             probability = trial.suggest_categorical('svc_prob', [True, False])
             class_weight = trial.suggest_categorical('svc_class_weight', [None, 'balanced'])
             n_estimators = 100
             clf = BaggingClassifier(SVC(C=c,coef0=coef0,probability=probability, class_weight=class_weight), max_samples=1.0 / n_estimators, n_estimators=n_estimators)
-            # Set n_jobs to the number of CPU cores for parallelization
-            # clf = SVC(C=c, coef0=coef0, probability=probability, class_weight=class_weight)
         elif classifier == 'GradientBoosting':
             learning_rate = trial.suggest_float('gb_learning_rate', 0.01, 1.0, log=True)
             n_estimators = trial.suggest_int('gb_n_estimators', 50, 500, 50)
@@ -238,7 +224,7 @@ if __name__ == '__main__':
         auc_mean = cross_val_score(clf, val_X, np.ravel(y), n_jobs=-1, cv=5, scoring='roc_auc').mean()
         return total_score(auc_mean, accuracy_mean, precision_mean, recall_score_mean, f1_score_mean, specificty_mean, rmse_mean)
 
-    study.optimize(objective, n_trials=100)  # 100
+    study.optimize(objective, n_trials=100)
     trial = study.best_trial
     best_params = trial.params
     print("Best Hyperparameters: {}".format(best_params))
@@ -283,9 +269,6 @@ if __name__ == '__main__':
     else:
         y = test_Y
 
-    y = np.ravel(test_Y)
-
-
     predicted_outcomes = best_model.predict(test_X)
 
     # Plot observed outcomes and predicted outcomes
@@ -318,7 +301,6 @@ if __name__ == '__main__':
 
     perm_importance = permutation_importance(best_model, test_X, y)
 
-    # Get the feature names from the 'xs' list
     features = np.array(xs)
 
     sorted_indices = perm_importance.importances_mean.argsort()[::-1]
